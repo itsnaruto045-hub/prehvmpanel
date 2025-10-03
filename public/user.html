@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>User Panel - VPS Control</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>User Panel</h1>
+    <div id="loginBox">
+      <input id="userName" placeholder="username" />
+      <button onclick="userLogin()">Login</button>
+      <div id="uStatus"></div>
+    </div>
+
+    <div id="userArea" style="display:none">
+      <h3>Your Instances</h3>
+      <ul id="instList"></ul>
+
+      <h3>Run Command</h3>
+      <textarea id="cmd" rows="4" cols="60" placeholder="Enter command to run"></textarea><br/>
+      <button onclick="runCmd()">Run</button>
+      <pre id="cmdOut"></pre>
+    </div>
+  </div>
+
+<script>
+async function userLogin(){
+  const username = document.getElementById('userName').value;
+  const res = await fetch('/api/user/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username})});
+  if(res.ok){
+    document.getElementById('loginBox').style.display='none';
+    document.getElementById('userArea').style.display='';
+    loadInstances();
+  } else {
+    document.getElementById('uStatus').innerText='Login failed';
+  }
+}
+async function loadInstances(){
+  const res = await fetch('/api/user/instances');
+  const items = await res.json();
+  const ul = document.getElementById('instList');
+  ul.innerHTML='';
+  items.forEach(i=>{
+    const li = document.createElement('li');
+    li.innerText = i.name + ' - ' + i.resources;
+    ul.appendChild(li);
+  });
+}
+async function runCmd(){
+  const command = document.getElementById('cmd').value;
+  const res = await fetch('/api/user/exec', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command})});
+  const data = await res.json();
+  document.getElementById('cmdOut').innerText = JSON.stringify(data, null, 2);
+}
+</script>
+</body>
+</html>

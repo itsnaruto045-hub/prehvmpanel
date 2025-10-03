@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Admin Panel - VPS Control</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="panel-header">
+      <img src="/logo.png" id="logo" alt="" style="opacity:0.12; position:absolute; right:20px; top:20px; width:200px;" />
+      <h1>Admin Panel</h1>
+    </div>
+    <div id="loginBox">
+      <h3>Login</h3>
+      <input id="adminUser" placeholder="username" />
+      <input id="adminPass" placeholder="password" type="password" />
+      <button onclick="adminLogin()">Login</button>
+      <div id="status"></div>
+    </div>
+
+    <div id="adminArea" style="display:none">
+      <h3>Create User</h3>
+      <input id="newUser" placeholder="username" />
+      <label><input type="checkbox" id="rootCheck" /> Give root access</label>
+      <button onclick="createUser()">Create</button>
+      <h3>Users</h3>
+      <ul id="userList"></ul>
+    </div>
+  </div>
+
+<script>
+async function adminLogin(){
+  const username = document.getElementById('adminUser').value;
+  const password = document.getElementById('adminPass').value;
+  const res = await fetch('/api/admin/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,password})});
+  if(res.ok){
+    document.getElementById('loginBox').style.display='none';
+    document.getElementById('adminArea').style.display='';
+    loadUsers();
+  } else {
+    document.getElementById('status').innerText = 'Login failed';
+  }
+}
+async function createUser(){
+  const username = document.getElementById('newUser').value;
+  const allowed_root = document.getElementById('rootCheck').checked;
+  await fetch('/api/admin/users', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,allowed_root})});
+  document.getElementById('newUser').value='';
+  loadUsers();
+}
+async function loadUsers(){
+  const res = await fetch('/api/admin/users');
+  const users = await res.json();
+  const ul = document.getElementById('userList');
+  ul.innerHTML='';
+  users.forEach(u=>{
+    const li = document.createElement('li');
+    li.innerText = u.username + ' (root: ' + (u.allowed_root? 'yes':'no') + ')';
+    ul.appendChild(li);
+  });
+}
+</script>
+</body>
+</html>
